@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capitals (jQuery)</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+      body { font-family: system-ui, Arial, sans-serif; margin: 20px; }
+      .container { max-width: 720px; margin: 0 auto; }
+      form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+      input, button { padding: 10px; }
+      button { grid-column: 1 / -1; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+      ul { list-style: none; padding: 0; display: grid; gap: 8px; }
+      li { padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; }
+      .error { color: #b91c1c; margin-bottom: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Capitals</h1>
+      <div id="error" class="error" style="display:none;"></div>
+      <form id="create-form">
+        <input id="country" placeholder="Country" required />
+        <input id="capital_city" placeholder="Capital city" required />
+        <input id="capital_population" type="number" placeholder="Population" required min="0" />
+        <input id="author" placeholder="Author username" required />
+        <button type="submit">Add capital</button>
+      </form>
+      <ul id="list"></ul>
+    </div>
+
+    <script>
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+
+      function showError(msg) {
+        $('#error').text(msg).show();
+      }
+
+      function load() {
+        $('#error').hide();
+        $.get('/api/capitals/')
+          .done(function(data) {
+            const $list = $('#list').empty();
+            data.forEach(function(item) {
+              const $li = $('<li/>');
+              $li.append($('<div/>').text(item.capital_city));
+              $li.append($('<div/>').text('Population: ' + item.capital_population + ' — Author: ' + item.author));
+              $list.append($li);
+            });
+          })
+          .fail(function(xhr) { showError(xhr.responseText || 'Failed to load'); });
+      }
+
+      $(function() {
+        load();
+        $('#create-form').on('submit', function(e) {
+          e.preventDefault();
+          $('#error').hide();
+          const payload = {
+            country: $('#country').val(),
+            capital_city: $('#capital_city').val(),
+            capital_population: Number($('#capital_population').val()),
+            author: $('#author').val()
+          };
+          $.ajax({
+            url: '/api/capitals/',
+            method: 'POST',
+            data: JSON.stringify(payload),
+            contentType: 'application/json',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+          })
+            .done(function() {
+              $('#country').val('');
+              $('#capital_city').val('');
+              $('#capital_population').val('');
+              $('#author').val('');
+              load();
+            })
+            .fail(function(xhr) { showError(xhr.responseText || 'Failed to create'); });
+        });
+      });
+    </script>
+  </body>
+  </html>
+
+
