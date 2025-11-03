@@ -10,7 +10,7 @@ class CapitalSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username', queryset=User.objects.all()
     )
-    country = serializers.CharField(write_only=True, max_length=100)
+    country = serializers.CharField(max_length=100)
 
     class Meta:
         model = Capital
